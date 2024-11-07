@@ -54,15 +54,27 @@ class _ProductListPageState extends State<ProductListPage> {
                               },
                             ),
                             Text('${product.quantity}'),
-                            IconButton(
-                              icon: Icon(Icons.add),
-                              onPressed: () {
-                                setState(() {
-                                  product.quantity++;
-                                  widget.cartViewModel.addToCart(product);  // Agregar al carrito
-                                });
-                              },
-                            ),
+                              IconButton(
+                                icon: Icon(Icons.add),
+                                onPressed: () {
+                                  setState(() {
+                                    // Verificar si la cantidad actual es menor que el stock disponible
+                                    if (product.quantity < product.stock) {
+                                      product.quantity++;
+                                      widget.cartViewModel.addToCart(product);  // Agregar al carrito si hay stock
+                                    } else {
+                                      // Mostrar SnackBar indicando que el stock ha sido superado
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('El stock máximo de este producto es ${product.stock}'),
+                                          duration: Duration(seconds: 2),
+                                        ),
+                                      );
+                                    }
+                                  });
+                                },
+                              )
+
                           ],
                         ),
                       );

@@ -1,89 +1,16 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:image_picker/image_picker.dart';
 import '../view_models/cart_view_model.dart';
 
-class ShoppingCartPage extends StatefulWidget {
+class ShoppingCartPage extends StatelessWidget {
   final CartViewModel cartViewModel;
 
   ShoppingCartPage({required this.cartViewModel});
 
-  @override
-  _ShoppingCartPageState createState() => _ShoppingCartPageState();
-}
-
-class _ShoppingCartPageState extends State<ShoppingCartPage> {
   // Controladores para los campos de entrada
   final TextEditingController nameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
   String selectedPaymentMethod = 'cash';
-  final ImagePicker _picker = ImagePicker();
-  File? _selectedImage;
-
-  Future<void> _getCurrentLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    // Verificar si el servicio de ubicación está habilitado
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      // El servicio de ubicación no está habilitado, muestra un mensaje
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Por favor, habilite los servicios de ubicación')),
-      );
-      return;
-    }
-
-    // Verificar los permisos de ubicación
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        // Los permisos están denegados, muestra un mensaje
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Permiso de ubicación denegado')),
-        );
-        return;
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      // Los permisos están denegados permanentemente, muestra un mensaje
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Permiso de ubicación denegado permanentemente')),
-      );
-      return;
-    }
-
-    // Si llegamos aquí, tenemos permisos y los servicios están habilitados
-    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-    setState(() {
-      addressController.text = 'Latitud: ${position.latitude}, Longitud: ${position.longitude}';
-    });
-  }
-
-  // Función para tomar una foto
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.camera, imageQuality: 50);
-
-    if (pickedFile != null) {
-      File imageFile = File(pickedFile.path);
-      final imageBytes = await imageFile.readAsBytes();
-      final imageSize = imageBytes.lengthInBytes / (1024 * 1024); // Tamaño en MB
-
-      if (imageSize <= 1) {
-        setState(() {
-          _selectedImage = imageFile;
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('La imagen supera el tamaño máximo de 1MB')),
-        );
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,9 +26,9 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
             // Lista de productos en el carrito
             Expanded(
               child: ListView.builder(
-                itemCount: widget.cartViewModel.cartItems.length,
+                itemCount: cartViewModel.cartItems.length,
                 itemBuilder: (context, index) {
-                  var product = widget.cartViewModel.cartItems[index];
+                  var product = cartViewModel.cartItems[index];
                   return ListTile(
                     title: Text(product.name),
                     subtitle: Text(product.description),
@@ -122,7 +49,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'S/ ${widget.cartViewModel.getTotal().toStringAsFixed(2)}',
+                  'S/ ${cartViewModel.getTotal().toStringAsFixed(2)}',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -145,9 +72,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                 DropdownMenuItem(value: 'debit-card', child: Text('Debit Card')),
               ],
               onChanged: (value) {
-                setState(() {
-                  selectedPaymentMethod = value!;
-                });
+                selectedPaymentMethod = value!;
               },
               decoration: InputDecoration(labelText: 'Método de pago'),
             ),
@@ -168,10 +93,11 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
             ),
             SizedBox(height: 10),
 
-            // Botón de obtener dirección con geolocalización
+            // Botón de obtener dirección (simulado)
             TextButton.icon(
-              onPressed: () async {
-                await _getCurrentLocation();
+              onPressed: () {
+                // Aquí podrías integrar funcionalidad para obtener la geolocalización
+                addressController.text = 'Dirección simulada';
               },
               icon: Icon(Icons.location_on),
               label: Text('Obtener mi dirección'),
@@ -181,23 +107,6 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
               decoration: InputDecoration(labelText: 'Dirección'),
               readOnly: true,
             ),
-            SizedBox(height: 10),
-
-            // Botón para tomar una foto y mostrar la imagen seleccionada
-            TextButton.icon(
-              onPressed: () async {
-                await _pickImage();
-              },
-              icon: Icon(Icons.camera_alt),
-              label: Text('Foto de la fachada'),
-            ),
-            if (_selectedImage != null)
-              Image.file(
-                _selectedImage!,
-                height: 150,
-                width: 150,
-                fit: BoxFit.cover,
-              ),
             SizedBox(height: 16),
 
             // Botón de compra
